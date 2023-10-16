@@ -6,6 +6,10 @@ async function getCategories() {
   return fetchData('https://api.chucknorris.io/jokes/categories');
 }
 
+async function getJokeByCategory(category) {
+  return fetchData(`https://api.chucknorris.io/jokes/search?query=${category}`)
+}
+
 async function fetchData(url) {
     try {
       const response = await fetch(url);
@@ -22,4 +26,4 @@ async function fetchData(url) {
     }
 }
 
-export { getRandomJoke, getCategories };
+export { getRandomJoke, getCategories, getJokeByCategory };
