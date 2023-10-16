@@ -1,22 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { getRandomJoke } from '../../services/ChuckNorrisJoke';
+import React, { useState, useEffect } from "react";
+import { getRandomJoke } from "../../services/ChuckNorrisJoke";
 
 function JokeDisplay() {
-  const [joke, setJoke] = useState('');
-  const [count, setCount] = useState(0)
+  const [joke, setJoke] = useState("");
+  const [count, setCount] = useState(0);
 
   useEffect(() => {
-    getNewJoke().finally(() => setCount(0));
+    getNewJoke()
+      .finally(() => setCount(0));
   }, []);
-  
+
   async function getNewJoke() {
-    try {
-      const jokeData = await getRandomJoke();
-      setJoke(jokeData.value);
-      setCount(count + 1);
-    } catch (error) {
-      console.error('Error fetching Chuck Norris joke:', error);
-    }
+    await getRandomJoke()
+      .then((randomJoke) => {
+        setJoke(randomJoke.value);
+        setCount(count + 1);
+      })
+      .catch((error) => 
+        console.error("Error fetching Chuck Norris joke:", error)
+      )
   }
 
   return (

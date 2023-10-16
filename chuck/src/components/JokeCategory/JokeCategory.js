@@ -1,31 +1,45 @@
-import React, { useState, useEffect } from 'react';
-import { getCategories, getJokeByCategory } from '../../services/ChuckNorrisJoke';
+import React, { useState, useEffect } from "react";
+import { getCategories, getJokeByCategory } from "../../services/ChuckNorrisJoke";
 
 function JokeCategory() {
   const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('');
   const [jokes, setJokes] = useState([]);
-  
+  const [searchText, setSearchText] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isTouched, setIsTouched] = useState(false);
+
+  const isInputValid = searchText.length >= 3 && searchText.length <= 120;
+  const hasSearchResults = jokes.length > 0;
+
   useEffect(() => {
-    getChuckCategories();
+    fetchChuckCategories();
   }, []);
 
-  async function getChuckCategories() {
-    try {
-      const categoryData = await getCategories();
-      setCategories(categoryData);
-    } catch (error) {
-      console.error('Error fetching Chuck Norris categories:', error);
+  async function fetchChuckCategories() {
+    await getCategories()
+      .then((categories) => setCategories(categories))
+      .catch((error) =>
+        console.error("Error fetching Chuck Norris categories:", error)
+      )
     }
-  }
 
-  const handleCategoryClick = async (category) => {
-    setSelectedCategory(category);
-    try {
-      const jokeData = await getJokeByCategory(category);
-      setJokes(jokeData.result);
-    } catch (error) {
-      console.error(`Error fetching Chuck Norris joke for category: ${category}`, error);
+  const handleSearch = async (event) => {
+    event.preventDefault();
+    setIsTouched(true);
+
+    if (isInputValid) {
+      setIsLoading(true);
+
+      await getJokeByCategory(searchText)
+        .then((jokes) => {
+            setJokes(jokes.result)
+            setIsLoading(false)
+        })
+        .catch((error) =>
+         console.error(`Error searching for Chuck Norris joke: ${searchText}`, error)
+        )
+    } else {
+      setJokes([]);
     }
   };
 
@@ -36,29 +50,54 @@ function JokeCategory() {
           <h4>Chuck Norris jokes by categories</h4>
         </div>
         <div className="card-body">
-          <ul className="list-group">
-            {categories.map((category) => (
-              <li
-                key={category}
-                className={`list-group-item ${category === selectedCategory ? 'active' : ''}`}
-                onClick={() => handleCategoryClick(category)}
-                style={{ cursor: 'pointer' }}
-              >
-                {category}
-              </li>
-            ))}
-          </ul>
-          {jokes.length > 0 && (
+          <form onSubmit={handleSearch}>
+            <div className="input-group mb-3">
+              <input
+                type="text"
+                className="form-control"
+                list="categoriesList"
+                placeholder="Enter a category or search term"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                onBlur={() => setIsTouched(true)}
+              />
+              <datalist id="categoriesList">
+                {categories.map((category) => (
+                  <option key={category} value={category} />
+                ))}
+              </datalist>
+              <div className="input-group-append">
+                <button
+                  className="btn btn-primary"
+                  type="submit"
+                  disabled={!isInputValid}
+                >
+                  Search
+                </button>
+              </div>
+            </div>
+          </form>
+          {(!isInputValid && !isLoading && isTouched) && (
+            <p className="text-danger">
+              Must be between 3 and 120 characters
+            </p>
+          )}
+          {hasSearchResults && !isLoading && (
             <div className="mt-3">
-              <h5>Chuck Norris Jokes for {selectedCategory}:</h5>
+              <h5>
+                Chuck Norris Jokes for {searchText}:
+              </h5>
               <ul className="list-group">
-                {jokes.map((jokeItem) => (
-                  <li key={jokeItem.id} className="list-group-item">
-                    {jokeItem.value}
+                {jokes.map((joke) => (
+                  <li key={joke.id} className="list-group-item">
+                    {joke.value}
                   </li>
                 ))}
               </ul>
             </div>
+          )}
+          {!hasSearchResults && isTouched && !isLoading && (
+            <p>No jokes found for '{searchText}'</p>
           )}
         </div>
       </div>
